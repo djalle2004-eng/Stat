@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>برنامج تحليل الاستدراك — نظام Progres</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f8fafc;
+  --color-background-success: #dcfce7;
+  --color-background-danger: #fee2e2;
+  --color-background-warning: #fef9c3;
+  --color-background-info: #e0f2fe;
+
+  --color-border-primary: #cbd5e1;
+  --color-border-secondary: #e2e8f0;
+  --color-border-tertiary: #f1f5f9;
+  --color-border-success: #86efac;
+  --color-border-danger: #fca5a5;
+  --color-border-warning: #fde047;
+  --color-border-info: #7dd3fc;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-success: #166534;
+  --color-text-danger: #991b1b;
+  --color-text-warning: #854d0e;
+  --color-text-info: #075985;
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans); background-color: #f1f5f9; padding: 20px;}
+.container { max-width: 1050px; margin: 0 auto; }
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+#app{padding:1rem 0;min-height:400px}
+.upload-zone{background: var(--color-background-primary); border:2px dashed var(--color-border-primary);border-radius:var(--border-radius-lg);padding:4rem 2rem;text-align:center;cursor:pointer;transition:.2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--color-text-info);background:var(--color-background-info)}
+.upload-icon{font-size:48px;color:var(--color-text-info);margin-bottom:1rem}
+.upload-title{font-size:18px;font-weight:bold;color:var(--color-text-primary);margin-bottom:.5rem}
+.upload-sub{font-size:14px;color:var(--color-text-secondary)}
+#fileInput{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+.card{background:var(--color-background-primary);border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:1.25rem 1.5rem;margin-bottom:1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+.section-title-main { font-size: 16px; font-weight: bold; color: var(--color-text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.25rem}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem;text-align:center; border: 1px solid var(--color-border-secondary)}
+.stat-val{font-size:24px;font-weight:bold}
+.stat-lbl{font-size:13px;color:var(--color-text-secondary);margin-top:4px}
+.s-total .stat-val{color:var(--color-text-primary)}
+.s-pass .stat-val{color:var(--color-text-success)}
+.s-rat .stat-val{color:var(--color-text-danger)}
+.s-debt .stat-val{color:var(--color-text-warning)}
+
+.sem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.sem-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; border: 1px solid var(--color-border-secondary); }
+.sem-card-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 5px;}
+.sem-stat-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.sem-stat-row.success { color: var(--color-text-success); font-weight: 500;}
+.sem-stat-row.danger { color: var(--color-text-danger); font-weight: 500;}
+
+/* Info détection fichier */
+.detection-card { background: #f0fdf4; border: 1px solid #86efac; border-radius: var(--border-radius-md); padding: 12px 16px; margin-bottom: 1rem; font-size: 13px; }
+.detection-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.detection-tag { background: white; border: 1px solid #86efac; border-radius: 6px; padding: 3px 10px; font-size: 12px; color: var(--color-text-success); font-weight: 500; }
+.detection-tag.s2 { border-color: var(--color-border-info); color: var(--color-text-info); }
+
+.subj-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.subj-stat-item { background: var(--color-background-primary); border: 1px solid var(--color-border-secondary); padding: 10px; border-radius: var(--border-radius-md); margin-bottom: 8px;}
+.subj-stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 8px;}
+.subj-stat-name { font-size: 13px; font-weight: bold; color: var(--color-text-primary); flex: 1; word-break: break-word;}
+.subj-stat-numbers { font-size: 12px; color: var(--color-text-danger); background: var(--color-background-danger); padding: 2px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap;}
+.progress-bg { background: var(--color-background-secondary); height: 8px; border-radius: 4px; width: 100%; overflow: hidden; position: relative;}
+.progress-fill { background: #10b981; height: 100%; position: absolute; left: 0; top: 0; transition: width 0.3s ease;}
+.progress-text { font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; display: flex; justify-content: space-between;}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:.75rem}
+.toggle-btn{font-size:13px;color:var(--color-text-secondary);background:var(--color-background-secondary);border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:4px 10px;cursor:pointer}
+.ue-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width: 768px) {
+  .sem-grid, .subj-stats-grid, .ue-grid { grid-template-columns: 1fr; }
+}
+
+.ue-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.75rem 1rem; border: 1px solid var(--color-border-secondary)}
+.ue-title{font-size:13px;font-weight:bold;color:var(--color-text-primary);margin-bottom:.75rem; border-bottom: 1px solid var(--color-border-primary); padding-bottom: 4px;}
+.subj-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12.5px; gap: 10px;}
+.subj-name{color:var(--color-text-primary);flex:1; word-break: break-word; font-weight: 500;}
+.subj-select{font-size:12px;border:1px solid var(--color-border-primary);border-radius:4px;padding:3px 6px;background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer; max-width: 100px;}
+
+.filters{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-btn{font-size:13px;padding:6px 14px;border-radius:var(--border-radius-md);border:1px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;transition:.15s; font-weight: 500;}
+.filter-btn:hover { background: var(--color-background-secondary); }
+.filter-btn.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+
+.student-list{display:flex;flex-direction:column;gap:8px}
+.stu-card{background:var(--color-background-primary);border-radius:var(--border-radius-md);padding:.75rem 1rem;border:1px solid var(--color-border-secondary); transition: all 0.2s;}
+.stu-card:hover { border-color: var(--color-border-primary); }
+.stu-card.has-rat{border-left: 4px solid #ef4444;}
+.stu-card.has-debt{border-left: 4px solid #eab308;}
+.stu-card.passed{border-left: 4px solid #22c55e;}
+
+.stu-header{display:flex;align-items:center;gap:12px;cursor:pointer}
+.stu-num{font-size:12px;color:var(--color-text-secondary);width:30px;text-align:center;flex-shrink:0; background: var(--color-background-secondary); padding: 2px 0; border-radius: 4px;}
+.stu-name{font-size:14px;font-weight:bold;color:var(--color-text-primary);flex:1}
+.stu-avgs{font-size:13px;color:var(--color-text-secondary);white-space:nowrap; background: var(--color-background-secondary); padding: 2px 8px; border-radius: 12px;}
+.status-badge{font-size:11px;padding:3px 10px;border-radius:12px;white-space:nowrap; font-weight: bold;}
+.badge-pass{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-rat{background:var(--color-background-danger);color:var(--color-text-danger)}
+.badge-debt{background:var(--color-background-warning);color:var(--color-text-warning)}
+
+.stu-detail{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--color-border-secondary)}
+.sem-block{margin-top:.5rem; background: var(--color-background-secondary); padding: 8px 12px; border-radius: var(--border-radius-md);}
+.sem-label{font-size:12px;color:var(--color-text-primary);font-weight:bold;margin-bottom:3px}
+.rat-tags{display:flex;flex-wrap:wrap;gap:6px}
+.rat-tag{font-size:12px;padding:4px 8px;border-radius:6px;background:var(--color-background-danger);color:var(--color-text-danger);border:1px solid var(--color-border-danger)}
+.ok-tag{font-size:12px;padding:4px 8px;border-radius:6px;background:var(--color-background-success);color:var(--color-text-success); border:1px solid var(--color-border-success)}
+.file-info{display:flex;align-items:center;gap:12px;margin-bottom:1rem; background: var(--color-background-primary); padding: 10px 15px; border-radius: var(--border-radius-lg); border: 1px solid var(--color-border-secondary); flex-wrap: wrap;}
+.file-badge{font-size:13px;background:var(--color-background-info);color:var(--color-text-info);padding:4px 12px;border-radius:12px; font-weight: 500;}
+
+.btn-action{font-size:13px;padding:6px 12px;border-radius:var(--border-radius-md);border:1px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: .15s;}
+.btn-action:hover{background: var(--color-background-secondary);}
+.btn-export-excel { border-color: #16a34a; color: #16a34a; }
+.btn-export-excel:hover { background: #dcfce7; }
+.btn-export-pdf { border-color: #dc2626; color: #dc2626; }
+.btn-export-pdf:hover { background: #fee2e2; }
+
+.no-results{text-align:center;padding:3rem;color:var(--color-text-secondary);font-size:15px; background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 1px dashed var(--color-border-primary);}
+.sem-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.avg-chip{font-size:12px;padding:2px 8px;border-radius:10px; font-weight: bold;}
+.avg-pass{background:var(--color-background-success);color:var(--color-text-success)}
+.avg-fail{background:var(--color-background-danger);color:var(--color-text-danger)}
+.hidden{display:none !important;}
+
+/* Add UE button */
+.add-ue-btn { font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--color-border-primary); background: white; color: var(--color-text-secondary); cursor: pointer; margin-top: 8px; width: 100%; }
+.add-ue-btn:hover { background: var(--color-background-secondary); }
+.ue-name-input { font-size: 12px; border: 1px solid var(--color-border-primary); border-radius: 4px; padding: 3px 8px; width: 100%; margin-bottom: 6px; }
+
+/* Specialty badge */
+.specialty-info { background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%); border: 1px solid #bae6fd; border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; }
+
+@media print {
+  html, body { background: white !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
+  .container { max-width: 100% !important; margin: 0 !important; }
+  .no-print { display: none !important; }
+  .card { border: 1px solid #cbd5e1 !important; box-shadow: none !important; margin-bottom: 20px !important; padding: 15px !important; break-inside: avoid; page-break-inside: avoid; }
+  .stu-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #cbd5e1 !important; margin-bottom: 10px !important; }
+  .progress-bg { background: #e2e8f0 !important; }
+  .progress-fill { background: #10b981 !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2 class="sr-only">برنامج تحليل الاستدراك - تحليل ملف المداولة وفق القواعد الجزائرية (نظام Progres)</h2>
+
+<div id="app">
+  <!-- واجهة الرفع -->
+  <div id="upload-view">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-size:24px;font-weight:bold;color:var(--color-text-primary);margin-bottom:8px">برنامج التحليل الشامل للاستدراك</div>
+      <div style="font-size:15px;color:var(--color-text-secondary)">Analyse des résultats — Session normale · نظام LMD الجزائري (Progres)</div>
+    </div>
+
+    <div class="upload-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+      <div class="upload-icon"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i></div>
+      <div class="upload-title">ارفع ملف المداولة (ملف Excel من نظام Progres)</div>
+      <div class="upload-sub">يدعم أي تخصص وأي دفعة — يكتشف المقاييس تلقائياً</div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="section-title-main"><i class="ti ti-sparkles" style="color:#f59e0b"></i> ميزات النسخة الجديدة</div>
+      <div style="display:grid;gap:8px; font-size: 14px; color: var(--color-text-secondary);">
+        <span style="display: flex; gap: 8px;"><i class="ti ti-check" style="color: var(--color-text-success)"></i> <span><strong>اكتشاف ذكي للمقاييس:</strong> يقرأ أسماء المقاييس مباشرة من ملف Progres (لا أعمدة مُبرمجة مسبقاً)</span></span>
+        <span style="display: flex; gap: 8px;"><i class="ti ti-check" style="color: var(--color-text-success)"></i> <span><strong>متعدد التخصصات:</strong> يعمل مع أي تخصص ودفعة بدون تعديل</span></span>
+        <span style="display: flex; gap: 8px;"><i class="ti ti-check" style="color: var(--color-text-success)"></i> <span><strong>التعويض السنوي:</strong> المعدل العام ≥ 10 → السنة مكتسبة</span></span>
+        <span style="display: flex; gap: 8px;"><i class="ti ti-check" style="color: var(--color-text-success)"></i> <span><strong>التعويض السداسي:</strong> معدل السداسي ≥ 10 → السداسي مكتسب بالكامل</span></span>
+        <span style="display: flex; gap: 8px;"><i class="ti ti-check" style="color: var(--color-text-success)"></i> <span><strong>اكتساب الوحدة:</strong> معدل UE ≥ 10 → تعويض مقاييس الوحدة</span></span>
+        <span style="display: flex; gap: 8px;"><i class="ti ti-check" style="color: var(--color-text-success)"></i> <span><strong>هيكل UE قابل للتعديل:</strong> يمكن تغيير انتماء المقاييس للوحدات في أي وقت</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- واجهة النتائج -->
+  <div id="results-view" class="hidden">
+    <!-- شريط الإجراءات والملف -->
+    <div id="file-info-bar" class="file-info"></div>
+
+    <!-- معلومات التخصص -->
+    <div id="specialty-bar" class="specialty-info no-print"></div>
+
+    <!-- معلومات الاكتشاف -->
+    <div id="detection-bar" class="detection-card no-print"></div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+      <div class="section-title-main" style="margin-bottom: 0;"><i class="ti ti-chart-pie"></i> الإحصائيات العامة</div>
+      <div class="no-print" style="display:flex; gap:8px; flex-wrap: wrap;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer; color: var(--color-text-success); background: var(--color-background-success); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--color-border-success); font-weight: bold;" title="إخفاء الطلبة الناجحين من القائمة لتوفير الورق عند الطباعة">
+          <input type="checkbox" id="hidePassedCheck" onchange="toggleHidePassed(this.checked)">
+          إخفاء الناجحين (للطباعة)
+        </label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer; color: var(--color-text-danger); background: var(--color-background-danger); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--color-border-danger); font-weight: bold;" title="استبعاد الطلبة المنقطعين (المعدل العام أو أحد السداسيين أقل من 1)">
+          <input type="checkbox" id="excludeDropoutsCheck" onchange="toggleDropouts(this.checked)">
+          استبعاد المنقطعين (< 1)
+        </label>
+      </div>
+    </div>
+    <div class="stat-grid" id="stats-grid"></div>
+
+    <!-- إحصائيات السداسيات -->
+    <div class="card">
+      <div class="section-title-main"><i class="ti ti-calendar-stats"></i> إحصائيات السداسيات</div>
+      <div class="sem-grid" id="sem-stats-grid"></div>
+    </div>
+
+    <!-- إحصائيات المقاييس -->
+    <div class="card">
+      <div class="section-title-main"><i class="ti ti-books"></i> إحصائيات المقاييس (الطلبة المعنيون بالاستدراك)</div>
+      <div class="subj-stats-grid">
+        <div>
+          <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--color-text-primary);" id="s1-subj-title">مقاييس السداسي الأول</div>
+          <div id="s1-subj-stats"></div>
+        </div>
+        <div>
+          <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: var(--color-text-primary);" id="s2-subj-title">مقاييس السداسي الثاني</div>
+          <div id="s2-subj-stats"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- إعدادات الوحدات التعليمية -->
+    <div class="card no-print">
+      <div class="section-header" onclick="toggleUE()">
+        <div class="section-title-main" style="margin-bottom: 0;"><i class="ti ti-sitemap"></i> هيكل الوحدات التعليمية (UE) — قابل للتعديل</div>
+        <button class="toggle-btn" id="ueToggleBtn">إظهار ▾</button>
+      </div>
+      <div id="ue-panel" class="hidden">
+        <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:1rem; padding: 10px; background: var(--color-background-secondary); border-radius: var(--border-radius-md);">
+          <i class="ti ti-bulb" style="color: #eab308;"></i> يمكنك تعديل انتماء المقاييس للوحدات التعليمية. أي تعديل سيعيد حساب النتائج والاستدراكات فوراً. يمكنك أيضاً إضافة وحدات جديدة.
+        </div>
+        <div style="font-size:14px;font-weight:bold;margin-bottom:.5rem;color:var(--color-text-primary)" id="s1-ue-title">تكوين السداسي 1</div>
+        <div class="ue-grid" id="s1-ue-grid"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="add-ue-btn" onclick="addUE('S1')" style="width:auto;padding:6px 14px;"><i class="ti ti-plus"></i> إضافة وحدة S1</button>
+        </div>
+        <div style="font-size:14px;font-weight:bold;margin:1.25rem 0 .5rem;color:var(--color-text-primary)" id="s2-ue-title">تكوين السداسي 2</div>
+        <div class="ue-grid" id="s2-ue-grid"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="add-ue-btn" onclick="addUE('S2')" style="width:auto;padding:6px 14px;"><i class="ti ti-plus"></i> إضافة وحدة S2</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- قائمة الطلبة -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div class="section-title-main" style="margin-bottom: 0;"><i class="ti ti-users"></i> قائمة الطلبة والنتائج التفصيلية</div>
+        <div style="font-size:13px;color:var(--color-text-secondary); font-weight: bold;" id="count-label"></div>
+      </div>
+      <div class="filters no-print" id="filter-bar"></div>
+      <div class="student-list" id="student-list"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ==========================================
+// STATE (dynamic — no hardcoded subjects)
+// ==========================================
+let state = {
+  students: [],
+  filename: '',
+  filter: 'all',
+  expanded: new Set(),
+  excludeDropouts: false,
+  hidePassed: false,
+  // Subjects detected dynamically from the file
+  s1Subjs: [],  // [{key, label, col}]
+  s2Subjs: [],  // [{key, label, col}]
+  // UE structure (auto-populated, user-editable)
+  s1UEs: [],
+  s2UEs: [],
+  // File metadata
+  specialty: '',
+  niveau: '',
+  annee: '',
+  s1Name: 'السداسي 1',
+  s2Name: 'السداسي 2',
+};
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+function avg(arr) {
+  const v = arr.filter(x => x !== null && x !== undefined && !isNaN(x));
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0;
+}
+function toNum(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
+  return isNaN(n) ? null : n;
+}
+function cleanLabel(str) {
+  return String(str || '').trim().replace(/^\s+/, '').replace(/\s+$/, '');
+}
+// Progres cells stored with apostrophe-prefix (text mode) come through as "'value'" or "'value"
+// This strips the wrapping single-quotes added by Excel text-mode storage
+function cleanCell(v) {
+  if (v === null || v === undefined) return v;
+  if (typeof v === 'number') return v;
+  let s = String(v);
+  // Remove surrounding single quotes added by Excel apostrophe-prefix storage
+  if (s.startsWith("'") && s.endsWith("'") && s.length > 2) s = s.slice(1, -1);
+  else if (s.startsWith("'")) s = s.slice(1);
+  return s.trim() || null;
+}
+
+// ==========================================
+// PROGRES FILE PARSER — v5 (fully dynamic)
+// ==========================================
+function parseProgresFile(file) {
+  return new Promise((res, rej) => {
+    const rd = new FileReader();
+    rd.onload = e => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array', cellText: false, cellDates: false });
+
+        let allStudents = [];
+        let detectedSubjs = { s1: [], s2: [] };
+        let fileMeta = { specialty: '', niveau: '', annee: '', s1Label: 'Semestre 1', s2Label: 'Semestre 2' };
+        let diagLog = [];
+        const log = (...a) => { diagLog.push(a.join(' ')); console.log('[PARSER]', ...a); };
+
+        for (let sheetName of wb.SheetNames) {
+          log('--- Sheet: "' + sheetName + '" ---');
+          const ws = wb.Sheets[sheetName];
+          const rowsRaw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+          if (!rowsRaw || rowsRaw.length < 10) { log('Skip: too few rows ' + (rowsRaw && rowsRaw.length)); continue; }
+          log('Total rows: ' + rowsRaw.length);
+
+          // Strip apostrophe-prefix quotes that some Excel text cells carry
+          const rows = rowsRaw.map(row => row ? row.map(cleanCell) : row);
+
+          // ---- STEP 1: Metadata ----
+          for (let i = 0; i < Math.min(rows.length, 24); i++) {
+            const row = rows[i]; if (!row) continue;
+            for (let j = 0; j < row.length; j++) {
+              const v = String(row[j] || '').trim(), vl = v.toLowerCase();
+              const nextVal = () => { for (let k=j+1;k<row.length;k++) if(row[k]&&String(row[k]).trim()) return cleanLabel(row[k]); return ''; };
+              if (!fileMeta.specialty && (vl.includes('spécialit') || vl.includes('specialit'))) fileMeta.specialty = nextVal();
+              if (!fileMeta.niveau && vl.includes('niveau')) fileMeta.niveau = nextVal();
+              if (!fileMeta.annee && (vl.includes('académique') || vl.includes('academique'))) fileMeta.annee = nextVal();
+            }
+          }
+
+          // ---- STEP 2: Find semester row (any "Semestre N") ----
+          let semRow = -1, s1StartCol = -1, s2StartCol = -1;
+          for (let i = 0; i < Math.min(rows.length, 35); i++) {
+            const row = rows[i]; if (!row) continue;
+            const semCols = [];
+            for (let j = 0; j < row.length; j++) {
+              const v = String(row[j] ?? '').trim();
+              if (/^semestre\s*\d+$/i.test(v) || /^semester\s*\d+$/i.test(v) || /^s[12]$/i.test(v))
+                semCols.push({ col: j, val: v });
+            }
+            if (semCols.length >= 2) {
+              semRow = i; s1StartCol = semCols[0].col; s2StartCol = semCols[1].col;
+              fileMeta.s1Label = semCols[0].val; fileMeta.s2Label = semCols[1].val;
+              log('Semester row ' + (i+1) + ': s1Col=' + s1StartCol + '(' + semCols[0].val + ') s2Col=' + s2StartCol + '(' + semCols[1].val + ')');
+              break;
+            }
+          }
+          if (semRow === -1) { log('ERROR: semester row not found'); continue; }
+
+          // ---- STEP 3: Subject header row (row after semRow) ----
+          const subjRow = semRow + 1;
+          if (subjRow >= rows.length) { log('ERROR: subjRow out of range'); continue; }
+          const headerRow = rows[subjRow];
+          log('Subject header row: ' + (subjRow+1) + ', len=' + headerRow.length);
+
+          // ---- STEP 4: Parse header row ----
+          let colS1Avg = -1, colS2Avg = -1, colMG = -1;
+          let s1SubjCols = [], s2SubjCols = [];
+          let foundS1Avg = false, foundS2Avg = false;
+
+          for (let j = 0; j < headerRow.length; j++) {
+            const rawVal = headerRow[j];
+            if (rawVal === null || rawVal === undefined) continue;
+            const v = String(rawVal).trim(); if (!v) continue;
+            const vUp = v.toUpperCase().replace(/\s+/g, '');
+            const vLow = v.toLowerCase();
+
+            if (vUp === 'MG' && colMG === -1) { colMG = j; log('  MG col: ' + j); continue; }
+            if (vLow.includes('moyenne du semestre')) {
+              if (!foundS1Avg) { colS1Avg = j; foundS1Avg = true; log('  S1avg col: ' + j); continue; }
+              if (!foundS2Avg) { colS2Avg = j; foundS2Avg = true; log('  S2avg col: ' + j); continue; }
+            }
+            if (!vLow.includes('moy') && vUp !== 'MG' && v.length > 1) {
+              if      (j >= s1StartCol && j < s2StartCol) s1SubjCols.push({ col: j, label: v });
+              else if (j >= s2StartCol)                   s2SubjCols.push({ col: j, label: v });
+            }
+          }
+          log('S1 subjs: ' + s1SubjCols.length + ', S2 subjs: ' + s2SubjCols.length);
+
+          // ---- STEP 4b: Detect N° and Name columns ----
+          let colNum = -1, colName = -1;
+          // Try header keywords first
+          for (let i = Math.max(0, semRow - 3); i <= subjRow && (colNum === -1 || colName === -1); i++) {
+            const row = rows[i]; if (!row) continue;
+            for (let j = 0; j < row.length; j++) {
+              const v = String(row[j] ?? '').trim().toUpperCase().replace(/\s+/g,'');
+              if (colNum  === -1 && (v==='N°'||v==='NO'||v==='N°'||v==='رقم'||v==='NUM'||v==='N')) colNum  = j;
+              if (colName === -1 && (v.includes('NOM')||v.includes('PRENOM')||v.includes('لقب')||v.includes('اسم'))) colName = j;
+            }
+          }
+          // Scan first data rows for a sequential-integer column
+          if (colNum === -1) {
+            const sampleRows = [];
+            for (let i = subjRow+1; i < Math.min(rows.length, subjRow+25) && sampleRows.length < 8; i++) {
+              const r = rows[i];
+              if (r && r.some(v => v !== null && v !== undefined)) sampleRows.push(r);
+            }
+            log('Sample rows for N° scan: ' + sampleRows.length);
+            if (sampleRows.length >= 2) {
+              const maxJ = Math.min(18, (sampleRows[0]||[]).length);
+              for (let j = 0; j < maxJ && colNum === -1; j++) {
+                let hits = 0;
+                for (const sr of sampleRows) {
+                  const n = parseInt(String(sr[j] ?? '').trim());
+                  if (!isNaN(n) && n > 0 && n <= 9999) hits++;
+                }
+                if (hits >= Math.min(4, sampleRows.length)) { colNum = j; log('N° col by scan: ' + j); }
+              }
+            }
+          }
+          // Last resort: find first non-empty data row and look for value "1"
+          if (colNum === -1) {
+            outer: for (let i = subjRow+1; i < Math.min(rows.length, subjRow+15); i++) {
+              const row = rows[i]; if (!row) continue;
+              for (let j = 0; j < Math.min(row.length, 15); j++) {
+                if (parseInt(String(row[j] ?? '').trim()) === 1) { colNum = j; log('N° col by "1" value: ' + j); break outer; }
+              }
+            }
+          }
+          if (colNum === -1) { colNum = 5; log('N° col FALLBACK: 5'); }
+
+          // Find name: first long alphabetic string after colNum in first non-empty data row
+          if (colName === -1) {
+            for (let i = subjRow+1; i < Math.min(rows.length, subjRow+8) && colName === -1; i++) {
+              const row = rows[i]; if (!row) continue;
+              for (let j = colNum+1; j < Math.min(row.length, colNum+12); j++) {
+                const v = String(row[j] ?? '').trim();
+                if (v.length > 3 && /[a-zA-Z\u00C0-\u024F\u0600-\u06FF]/.test(v)) {
+                  colName = j; log('Name col: ' + j + ' → "' + v.substring(0,20) + '"'); break;
+                }
+              }
+            }
+          }
+          if (colName === -1) { colName = 7; log('Name col FALLBACK: 7'); }
+          log('Final cols: num=' + colNum + ' name=' + colName + ' s1avg=' + colS1Avg + ' s2avg=' + colS2Avg + ' mg=' + colMG);
+
+          // Build subject objects with stable keys
+          const makeKey = (label, prefix) =>
+            prefix + '_' + label.replace(/[^a-zA-Z\u0600-\u06FF0-9]/g, '_').substring(0, 20);
+          const s1Subjs = s1SubjCols.map(s => ({ key: makeKey(s.label, 'S1'), label: s.label, col: s.col }));
+          const s2Subjs = s2SubjCols.map(s => ({ key: makeKey(s.label, 'S2'), label: s.label, col: s.col }));
+          detectedSubjs = { s1: s1Subjs, s2: s2Subjs };
+
+          // ---- STEP 5: Parse student rows ----
+          const seen = new Set();
+          let sheetStudents = [];
+
+          for (let i = subjRow + 1; i < rows.length; i++) {
+            const row = rows[i]; if (!row) continue;
+            const numRaw = row[colNum];
+            if (numRaw === null || numRaw === undefined) continue;
+            const n = parseInt(String(numRaw).trim());
+            if (isNaN(n) || n <= 0 || n > 99999) continue;
+            if (seen.has(n)) continue;
+            const name = String(row[colName] ?? '').trim();
+            if (!name || name.length < 2) continue;
+            seen.add(n);
+
+            const g = idx => idx === -1 ? null : toNum(row[idx]);
+            const s1Marks = {}; s1Subjs.forEach(s => { s1Marks[s.key] = g(s.col); });
+            const s2Marks = {}; s2Subjs.forEach(s => { s2Marks[s.key] = g(s.col); });
+
+            let s1Avg = g(colS1Avg), s2Avg = g(colS2Avg);
+            if (s1Avg === null && s1Subjs.length > 0) {
+              const ms = s1Subjs.map(s => s1Marks[s.key]).filter(x => x !== null);
+              if (ms.length) s1Avg = avg(ms);
+            }
+            if (s2Avg === null && s2Subjs.length > 0) {
+              const ms = s2Subjs.map(s => s2Marks[s.key]).filter(x => x !== null);
+              if (ms.length) s2Avg = avg(ms);
+            }
+            sheetStudents.push({ num: n, name, s1: s1Marks, s1Avg, s2: s2Marks, s2Avg, mgRaw: g(colMG) });
+          }
+          log('Students from sheet "' + sheetName + '": ' + sheetStudents.length);
+          if (sheetStudents.length > 0) allStudents = allStudents.concat(sheetStudents);
+        }
+
+        window._lastDiagLog = diagLog;
+
+        if (allStudents.length === 0) {
+          rej(new Error('لم يتم العثور على طلبة في الملف.\n\nسجل التشخيص (آخر 15 سطر):\n' +
+            diagLog.slice(-15).join('\n') + '\n\nيرجى التأكد من أن الملف صادر من نظام Progres.'));
+          return;
+        }
+        allStudents.sort((a, b) => a.num - b.num);
+        res({ students: allStudents, subjs: detectedSubjs, meta: fileMeta, diagLog });
+      } catch (err) {
+        console.error('[PARSER] Exception:', err);
+        rej(new Error('خطأ تقني: ' + err.message));
+      }
+    };
+    rd.onerror = rej;
+    rd.readAsArrayBuffer(file);
+  });
+}
+
+// ==========================================
+// BUILD DEFAULT UE STRUCTURE
+// Auto-assigns subjects: one per UE by default
+// ==========================================
+function buildDefaultUEs(subjs, semPrefix) {
+  // Create one UE per subject initially (user can merge/reorganize)
+  // But limit to max 4 UEs and group subjects somewhat intelligently
+  const n = subjs.length;
+  if (n === 0) return [{ id: semPrefix + 'U1', name: 'UE 1', subjects: [] }];
+
+  // Try to split into up to 4 UEs roughly equally
+  const numUEs = Math.min(4, n);
+  const ues = [];
+  const chunkSize = Math.ceil(n / numUEs);
+  for (let i = 0; i < numUEs; i++) {
+    const chunk = subjs.slice(i * chunkSize, (i + 1) * chunkSize);
+    ues.push({
+      id: semPrefix + 'U' + (i + 1),
+      name: 'UE ' + (i + 1),
+      subjects: chunk.map(s => s.key),
+    });
+  }
+  return ues;
+}
+
+// ==========================================
+// ANALYSIS ENGINE
+// ==========================================
+function analyzeStudent(stu) {
+  const s1a = stu.s1Avg ?? 0;
+  const s2a = stu.s2Avg ?? 0;
+  const mg = (s1a + s2a) / 2;
+
+  if (mg >= 10) return { result: 'PASS_ANNUAL', mg, s1a, s2a, ratS1: [], ratS2: [] };
+
+  const ratS1 = [], ratS2 = [];
+
+  if (s1a < 10) {
+    const ueA = {};
+    state.s1UEs.forEach(ue => {
+      const marks = ue.subjects.map(k => stu.s1[k] ?? 0);
+      ueA[ue.id] = avg(marks);
+    });
+    state.s1Subjs.forEach(s => {
+      const m = stu.s1[s.key] ?? 0;
+      if (m >= 10) return;
+      const ue = state.s1UEs.find(u => u.subjects.includes(s.key));
+      if (ue && ueA[ue.id] >= 10) return;
+      ratS1.push(s.key);
+    });
+  }
+
+  if (s2a < 10) {
+    const ueA = {};
+    state.s2UEs.forEach(ue => {
+      const marks = ue.subjects.map(k => stu.s2[k] ?? 0);
+      ueA[ue.id] = avg(marks);
+    });
+    state.s2Subjs.forEach(s => {
+      const m = stu.s2[s.key] ?? 0;
+      if (m >= 10) return;
+      const ue = state.s2UEs.find(u => u.subjects.includes(s.key));
+      if (ue && ueA[ue.id] >= 10) return;
+      ratS2.push(s.key);
+    });
+  }
+
+  const nRat = ratS1.length + ratS2.length;
+  const hasDebt = (s1a >= 10 || s2a >= 10) && nRat > 0;
+
+  if (nRat === 0) return { result: 'PASS_COMP', mg, s1a, s2a, ratS1: [], ratS2: [] };
+  return { result: hasDebt ? 'DEBT' : 'RAT', mg, s1a, s2a, ratS1, ratS2 };
+}
+
+// ==========================================
+// RENDER FUNCTIONS
+// ==========================================
+function showUpload() {
+  document.getElementById('upload-view').classList.remove('hidden');
+  document.getElementById('results-view').classList.add('hidden');
+}
+function showResults() {
+  document.getElementById('upload-view').classList.add('hidden');
+  document.getElementById('results-view').classList.remove('hidden');
+}
+
+function renderSpecialtyBar() {
+  const bar = document.getElementById('specialty-bar');
+  const parts = [];
+  if (state.specialty) parts.push(`<strong>التخصص:</strong> ${state.specialty}`);
+  if (state.niveau) parts.push(`<strong>المستوى:</strong> ${state.niveau}`);
+  if (state.annee) parts.push(`<strong>السنة الأكاديمية:</strong> ${state.annee}`);
+  bar.innerHTML = parts.length > 0
+    ? `<i class="ti ti-school" style="color:#0369a1"></i> &nbsp;${parts.join(' &nbsp;·&nbsp; ')}`
+    : '';
+  bar.style.display = parts.length > 0 ? '' : 'none';
+}
+
+function renderDetectionBar() {
+  const bar = document.getElementById('detection-bar');
+  const s1Labels = state.s1Subjs.map(s => `<span class="detection-tag">${s.label}</span>`).join('');
+  const s2Labels = state.s2Subjs.map(s => `<span class="detection-tag s2">${s.label}</span>`).join('');
+  bar.innerHTML = `
+    <div style="font-weight:bold;margin-bottom:6px;color:var(--color-text-success)"><i class="ti ti-check-circle"></i> تم اكتشاف المقاييس تلقائياً من الملف</div>
+    <div style="margin-bottom:4px;font-weight:500;color:var(--color-text-primary)">${state.s1Name} (${state.s1Subjs.length} مقياس):</div>
+    <div class="detection-row" style="margin-bottom:10px">${s1Labels || '<span style="color:var(--color-text-secondary)">لم يتم اكتشاف مقاييس</span>'}</div>
+    <div style="margin-bottom:4px;font-weight:500;color:var(--color-text-primary)">${state.s2Name} (${state.s2Subjs.length} مقياس):</div>
+    <div class="detection-row">${s2Labels || '<span style="color:var(--color-text-secondary)">لم يتم اكتشاف مقاييس</span>'}</div>
+  `;
+}
+
+function renderGlobalStats(results) {
+  const total = results.length;
+  const passAnnual = results.filter(r => r.result === 'PASS_ANNUAL').length;
+  const passComp = results.filter(r => r.result === 'PASS_COMP').length;
+  const withDebt = results.filter(r => r.result === 'DEBT').length;
+  const withRat = results.filter(r => r.result === 'RAT').length;
+  const ratCount = withDebt + withRat;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat s-total"><div class="stat-val">${total}</div><div class="stat-lbl">إجمالي الطلبة المقيمين</div></div>
+    <div class="stat s-pass"><div class="stat-val">${passAnnual + passComp}</div><div class="stat-lbl">ناجحون كلياً (بدون استدراك)</div></div>
+    <div class="stat s-debt"><div class="stat-val">${withDebt}</div><div class="stat-lbl">ناجح مع ديون (ينتقل للعام القادم)</div></div>
+    <div class="stat s-rat"><div class="stat-val">${ratCount}</div><div class="stat-lbl">معنيون بامتحانات الاستدراك</div></div>
+  `;
+}
+
+function renderDetailedStats(results) {
+  const total = results.length;
+  if (total === 0) return;
+
+  let s1Pass = 0, s1Fail = 0, s2Pass = 0, s2Fail = 0;
+  results.forEach(r => {
+    if (r.s1a >= 10) s1Pass++; else s1Fail++;
+    if (r.s2a >= 10) s2Pass++; else s2Fail++;
+  });
+
+  const perc = (val) => ((val / total) * 100).toFixed(1) + '%';
+
+  document.getElementById('sem-stats-grid').innerHTML = `
+    <div class="sem-card">
+      <div class="sem-card-title">${state.s1Name}</div>
+      <div class="sem-stat-row success"><span>مكتسب (≥10)</span> <span>${s1Pass} طالب (${perc(s1Pass)})</span></div>
+      <div class="sem-stat-row danger"><span>غير مكتسب (<10)</span> <span>${s1Fail} طالب (${perc(s1Fail)})</span></div>
+    </div>
+    <div class="sem-card">
+      <div class="sem-card-title">${state.s2Name}</div>
+      <div class="sem-stat-row success"><span>مكتسب (≥10)</span> <span>${s2Pass} طالب (${perc(s2Pass)})</span></div>
+      <div class="sem-stat-row danger"><span>غير مكتسب (<10)</span> <span>${s2Fail} طالب (${perc(s2Fail)})</span></div>
+    </div>
+  `;
+
+  document.getElementById('s1-subj-title').textContent = `مقاييس ${state.s1Name}`;
+  document.getElementById('s2-subj-title').textContent = `مقاييس ${state.s2Name}`;
+
+  const s1Stats = state.s1Subjs.map(s => ({ ...s, ratCount: 0 }));
+  const s2Stats = state.s2Subjs.map(s => ({ ...s, ratCount: 0 }));
+
+  results.forEach(r => {
+    r.ratS1.forEach(k => { const s = s1Stats.find(x => x.key === k); if (s) s.ratCount++; });
+    r.ratS2.forEach(k => { const s = s2Stats.find(x => x.key === k); if (s) s.ratCount++; });
+  });
+
+  const renderSubjGrid = (stats) => {
+    if (stats.length === 0) return '<div style="color:var(--color-text-secondary);font-size:13px;padding:10px;">لا توجد مقاييس</div>';
+    return stats.map(s => {
+      const successCount = total - s.ratCount;
+      const successRate = (successCount / total) * 100;
+      return `
+        <div class="subj-stat-item">
+          <div class="subj-stat-header">
+            <span class="subj-stat-name" title="${s.label}">${s.label}</span>
+            <span class="subj-stat-numbers" title="عدد الطلبة في الاستدراك">${s.ratCount} استدراك</span>
+          </div>
+          <div class="progress-bg">
+            <div class="progress-fill" style="width: ${successRate}%; background: ${successRate > 50 ? '#10b981' : (successRate > 25 ? '#f59e0b' : '#ef4444')}"></div>
+          </div>
+          <div class="progress-text">
+            <span>نسبة النجاح الاجمالية</span>
+            <span>${successRate.toFixed(1)}%</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  document.getElementById('s1-subj-stats').innerHTML = renderSubjGrid(s1Stats);
+  document.getElementById('s2-subj-stats').innerHTML = renderSubjGrid(s2Stats);
+}
+
+function renderStudents(results, activeStudents) {
+  const f = state.filter;
+  const pairs = activeStudents.map((s, i) => ({ s, r: results[i] }));
+  const filtered = pairs.filter(({ r }) => {
+    if (state.hidePassed && (r.result === 'PASS_ANNUAL' || r.result === 'PASS_COMP')) return false;
+    if (f === 'all') return true;
+    if (f === 'rat') return r.result === 'RAT' || r.result === 'DEBT';
+    if (f === 'pass') return r.result === 'PASS_ANNUAL' || r.result === 'PASS_COMP';
+    return true;
+  });
+
+  document.getElementById('count-label').textContent = `يعرض ${filtered.length} من أصل ${activeStudents.length} طالب`;
+
+  if (filtered.length === 0) {
+    document.getElementById('student-list').innerHTML = '<div class="no-results"><i class="ti ti-mood-empty" aria-hidden="true" style="font-size:32px;display:block;margin-bottom:1rem;color:var(--color-text-secondary)"></i>لا توجد نتائج تطابق الفلتر الحالي</div>';
+    return;
+  }
+
+  document.getElementById('student-list').innerHTML = filtered.map(({ s, r }) => {
+    const cardClass = r.result === 'RAT' ? 'has-rat' : r.result === 'DEBT' ? 'has-debt' : 'passed';
+    const badge = r.result === 'PASS_ANNUAL' ? '<span class="status-badge badge-pass">ناجح — تعويض سنوي</span>' :
+      r.result === 'PASS_COMP' ? '<span class="status-badge badge-pass">ناجح — تعويض سداسي</span>' :
+      r.result === 'DEBT' ? '<span class="status-badge badge-debt">ناجح مع ديون</span>' :
+      '<span class="status-badge badge-rat">معني بالاستدراك</span>';
+
+    const expanded = state.expanded.has(s.num);
+    const s1AvgFmt = (r.s1a ?? 0).toFixed(2);
+    const s2AvgFmt = (r.s2a ?? 0).toFixed(2);
+    const mgFmt = r.mg.toFixed(2);
+
+    let detail = '';
+    if (expanded) {
+      const getSubjDetail = (semSubjs, marks, ues, ratList) => {
+        const ueA = {};
+        ues.forEach(ue => {
+          const ms = ue.subjects.map(k => marks[k] ?? 0);
+          ueA[ue.id] = avg(ms);
+        });
+        return ues.map(ue => {
+          const subjsInUE = semSubjs.filter(s => ue.subjects.includes(s.key));
+          if (subjsInUE.length === 0) return '';
+          const row = subjsInUE.map(subj => {
+            const m = marks[subj.key] ?? 0;
+            const inRat = ratList.includes(subj.key);
+            const cls = inRat ? 'rat-tag' : 'ok-tag';
+            const icon = inRat ? '' : '✓ ';
+            return `<span class="${cls}" title="${subj.label}">${icon}${subj.label}: ${m.toFixed ? m.toFixed(1) : m}</span>`;
+          }).join('');
+          const ueAvgFmt = (ueA[ue.id] ?? 0).toFixed(2);
+          const ueCls = (ueA[ue.id] ?? 0) >= 10 ? 'avg-pass' : 'avg-fail';
+          return `<div style="margin-bottom:.5rem; background: var(--color-background-primary); padding: 6px; border-radius: 6px; border: 1px solid var(--color-border-tertiary);">
+            <div style="font-size:12px;color:var(--color-text-secondary); margin-bottom: 6px; display: flex; justify-content: space-between;">
+              <span>${ue.name}</span> <span class="avg-chip ${ueCls}">معدل: ${ueAvgFmt}</span>
+            </div>
+            <div class="rat-tags">${row}</div>
+          </div>`;
+        }).join('');
+      };
+
+      const s1Block = `<div class="sem-block">
+        <div class="sem-head">
+          <span class="sem-label">تفاصيل ${state.s1Name}</span>
+          <span class="avg-chip ${r.s1a >= 10 ? 'avg-pass' : 'avg-fail'}">معدل السداسي: ${s1AvgFmt}</span>
+        </div>
+        ${r.s1a < 10 ? getSubjDetail(state.s1Subjs, s.s1, state.s1UEs, r.ratS1) : '<div style="padding: 8px 0;"><span class="ok-tag">✓ السداسي مكتسب بالكامل (لا يوجد استدراك)</span></div>'}
+      </div>`;
+
+      const s2Block = `<div class="sem-block">
+        <div class="sem-head">
+          <span class="sem-label">تفاصيل ${state.s2Name}</span>
+          <span class="avg-chip ${r.s2a >= 10 ? 'avg-pass' : 'avg-fail'}">معدل السداسي: ${s2AvgFmt}</span>
+        </div>
+        ${r.s2a < 10 ? getSubjDetail(state.s2Subjs, s.s2, state.s2UEs, r.ratS2) : '<div style="padding: 8px 0;"><span class="ok-tag">✓ السداسي مكتسب بالكامل (لا يوجد استدراك)</span></div>'}
+      </div>`;
+
+      const ratTotal = r.ratS1.length + r.ratS2.length;
+      detail = `<div class="stu-detail">
+        ${r.result === 'PASS_ANNUAL'
+          ? `<div style="padding: 10px; background: var(--color-background-success); border-radius: 8px; color: var(--color-text-success); font-weight: bold; border: 1px solid var(--color-border-success);"><i class="ti ti-check"></i> المعدل العام ${mgFmt}/20 — السنة مكتسبة بالكامل عبر التعويض السنوي</div>`
+          : `${s1Block}${s2Block}<div style="margin-top:.75rem;font-size:13px;color:var(--color-text-primary); background: var(--color-background-warning); padding: 8px; border-radius: 6px; border: 1px solid var(--color-border-warning);">مجموع مقاييس الاستدراك أو الديون: <strong>${ratTotal} مقاييس</strong></div>`
+        }
+      </div>`;
+    }
+
+    return `<div class="stu-card ${cardClass}">
+      <div class="stu-header" onclick="toggleExpand(${s.num})">
+        <span class="stu-num">${s.num}</span>
+        <span class="stu-name">${s.name}</span>
+        <span class="stu-avgs">م.ع: ${mgFmt}</span>
+        ${badge}
+        <i class="ti ti-chevron-${expanded ? 'up' : 'down'} no-print" style="font-size:16px;color:var(--color-text-secondary);flex-shrink:0" aria-hidden="true"></i>
+      </div>
+      ${detail}
+    </div>`;
+  }).join('');
+}
+
+function renderFilterBar() {
+  const btns = [{ k: 'all', l: 'الكل' }, { k: 'rat', l: 'المعنيون بالاستدراك والديون' }, { k: 'pass', l: 'الناجحون كلياً' }];
+  document.getElementById('filter-bar').innerHTML = btns.map(b =>
+    `<button class="filter-btn${state.filter === b.k ? ' active' : ''}" onclick="setFilter('${b.k}')">${b.l}</button>`
+  ).join('');
+}
+
+function renderUEConfig() {
+  const renderSem = (semSubjs, ues, gridId, sem) => {
+    document.getElementById(gridId).innerHTML = ues.map(ue => `
+      <div class="ue-card">
+        <div class="ue-title">${ue.name} <span style="font-weight: normal; font-size: 11px; color: var(--color-text-secondary);">(${ue.subjects.length} مقاييس)</span></div>
+        ${semSubjs.map(s => `
+          <div class="subj-row">
+            <span class="subj-name" title="${s.label}">${s.label}</span>
+            <select class="subj-select" onchange="moveSubj('${sem}','${s.key}',this.value)">
+              ${ues.map(u => `<option value="${u.id}"${u.subjects.includes(s.key) ? 'selected' : ''}>${u.name}</option>`).join('')}
+            </select>
+          </div>`).join('')}
+      </div>`).join('');
+  };
+  renderSem(state.s1Subjs, state.s1UEs, 's1-ue-grid', 'S1');
+  renderSem(state.s2Subjs, state.s2UEs, 's2-ue-grid', 'S2');
+  document.getElementById('s1-ue-title').textContent = `تكوين ${state.s1Name}`;
+  document.getElementById('s2-ue-title').textContent = `تكوين ${state.s2Name}`;
+}
+
+function addUE(sem) {
+  const ues = sem === 'S1' ? state.s1UEs : state.s2UEs;
+  const n = ues.length + 1;
+  ues.push({ id: sem + 'U' + n + '_' + Date.now(), name: 'UE ' + n, subjects: [] });
+  render();
+}
+
+function moveSubj(sem, subjKey, newUeId) {
+  const ues = sem === 'S1' ? state.s1UEs : state.s2UEs;
+  ues.forEach(ue => { ue.subjects = ue.subjects.filter(k => k !== subjKey); });
+  const target = ues.find(u => u.id === newUeId);
+  if (target) target.subjects.push(subjKey);
+  render();
+}
+
+function toggleDropouts(checked) { state.excludeDropouts = checked; render(); }
+function toggleHidePassed(checked) { state.hidePassed = checked; render(); }
+
+function getActiveStudents() {
+  if (!state.excludeDropouts) return state.students;
+  return state.students.filter(s => {
+    const s1a = s.s1Avg ?? 0;
+    const s2a = s.s2Avg ?? 0;
+    const mg = (s1a + s2a) / 2;
+    return !(mg < 1 || s1a < 1 || s2a < 1);
+  });
+}
+
+function render() {
+  const activeStudents = getActiveStudents();
+  const results = activeStudents.map(s => analyzeStudent(s));
+  renderGlobalStats(results);
+  renderDetailedStats(results);
+  renderFilterBar();
+  renderStudents(results, activeStudents);
+  renderUEConfig();
+}
+
+function setFilter(f) { state.filter = f; render(); }
+function toggleExpand(num) {
+  if (state.expanded.has(num)) state.expanded.delete(num); else state.expanded.add(num);
+  render();
+}
+function toggleUE() {
+  const p = document.getElementById('ue-panel');
+  const b = document.getElementById('ueToggleBtn');
+  const isHid = p.classList.contains('hidden');
+  p.classList.toggle('hidden', !isHid);
+  b.textContent = isHid ? 'إخفاء ▴' : 'إظهار ▾';
+}
+
+// ==========================================
+// EXPORT FUNCTIONS
+// ==========================================
+function exportExcel() {
+  const activeStudents = getActiveStudents();
+  if (activeStudents.length === 0) return;
+  const results = activeStudents.map(s => analyzeStudent(s));
+  const f = state.filter;
+  const filtered = activeStudents.map((s, i) => ({ s, r: results[i] })).filter(({ r }) => {
+    if (state.hidePassed && (r.result === 'PASS_ANNUAL' || r.result === 'PASS_COMP')) return false;
+    if (f === 'all') return true;
+    if (f === 'rat') return r.result === 'RAT' || r.result === 'DEBT';
+    if (f === 'pass') return r.result === 'PASS_ANNUAL' || r.result === 'PASS_COMP';
+    return true;
+  });
+
+  const getSubjNames = (keys, allSubjs) => keys.map(k => allSubjs.find(x => x.key === k)?.label).filter(Boolean).join('، ');
+
+  const data = filtered.map(({ s, r }) => ({
+    'الرقم': s.num,
+    'الاسم واللقب': s.name,
+    'المعدل العام': r.mg.toFixed(2),
+    [`معدل ${state.s1Name}`]: (r.s1a ?? 0).toFixed(2),
+    [`معدل ${state.s2Name}`]: (r.s2a ?? 0).toFixed(2),
+    'الوضعية': r.result === 'PASS_ANNUAL' ? 'ناجح (تعويض سنوي)' :
+               r.result === 'PASS_COMP' ? 'ناجح (تعويض سداسي)' :
+               r.result === 'DEBT' ? 'ناجح مع ديون' : 'معني بالاستدراك',
+    [`مقاييس الاستدراك ${state.s1Name}`]: getSubjNames(r.ratS1, state.s1Subjs),
+    [`مقاييس الاستدراك ${state.s2Name}`]: getSubjNames(r.ratS2, state.s2Subjs),
+  }));
+
+  const summaryData = [];
+  const detailedSubjectsData = [];
+  [...state.s1Subjs, ...state.s2Subjs].forEach(subj => {
+    const isS1 = state.s1Subjs.includes(subj);
+    let count = 0;
+    filtered.forEach(({ s, r }) => {
+      const hasRat = isS1 ? r.ratS1.includes(subj.key) : r.ratS2.includes(subj.key);
+      if (hasRat) {
+        count++;
+        detailedSubjectsData.push({
+          'السداسي': isS1 ? state.s1Name : state.s2Name,
+          'المقياس': subj.label,
+          'رقم الطالب': s.num,
+          'اسم الطالب': s.name,
+        });
+      }
+    });
+    summaryData.push({ 'السداسي': isS1 ? state.s1Name : state.s2Name, 'المقياس': subj.label, 'عدد المستدركين': count });
+  });
+
+  const makeSheet = (data) => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    if (!ws['!views']) ws['!views'] = [];
+    ws['!views'].push({ rightToLeft: true });
+    return ws;
+  };
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, makeSheet(data), 'النتائج المعالجة');
+  XLSX.utils.book_append_sheet(wb, makeSheet(summaryData), 'إحصائيات المقاييس');
+  XLSX.utils.book_append_sheet(wb, makeSheet(detailedSubjectsData), 'قوائم الطلبة حسب المقياس');
+  XLSX.writeFile(wb, `تقرير_الاستدراك_${state.filename.split('.')[0] || 'بيانات'}.xlsx`);
+}
+
+function exportPDF() {
+  const activeStudents = getActiveStudents();
+  if (activeStudents.length === 0) return;
+  const results = activeStudents.map(s => analyzeStudent(s));
+  const f = state.filter;
+  const filtered = activeStudents.filter((s, i) => {
+    const r = results[i];
+    if (state.hidePassed && (r.result === 'PASS_ANNUAL' || r.result === 'PASS_COMP')) return false;
+    if (f === 'all') return true;
+    if (f === 'rat') return r.result === 'RAT' || r.result === 'DEBT';
+    if (f === 'pass') return r.result === 'PASS_ANNUAL' || r.result === 'PASS_COMP';
+    return true;
+  });
+  filtered.forEach(s => state.expanded.add(s.num));
+  render();
+  setTimeout(() => {
+    alert('ملاحظة هامة:\n\nللحصول على التقرير بشكل سليم، يرجى اختيار "حفظ بتنسيق PDF" (Save as PDF) من نافذة الطباعة بدلاً من اختيار طابعة ورقية.');
+    try { window.print(); } catch (e) { console.error('Print failed:', e); }
+  }, 600);
+}
+
+// ==========================================
+// FILE HANDLER
+// ==========================================
+async function handleFile(file) {
+  if (!file) return;
+  try {
+    const { students, subjs, meta } = await parseProgresFile(file);
+
+    if (students.length === 0) {
+      alert('لم يتم العثور على طلبة صحيحين. يرجى التأكد من أن الملف صادر من نظام Progres.');
+      return;
+    }
+
+    // Update global state
+    state.students = students;
+    state.filename = file.name;
+    state.expanded = new Set();
+    state.filter = 'all';
+    state.excludeDropouts = false;
+    state.hidePassed = false;
+    state.s1Subjs = subjs.s1;
+    state.s2Subjs = subjs.s2;
+    state.specialty = meta.specialty;
+    state.niveau = meta.niveau;
+    state.annee = meta.annee;
+    state.s1Name = meta.s1Label || 'السداسي 1';
+    state.s2Name = meta.s2Label || 'السداسي 2';
+
+    // Build default UE structure
+    state.s1UEs = buildDefaultUEs(subjs.s1, 'S1');
+    state.s2UEs = buildDefaultUEs(subjs.s2, 'S2');
+
+    // Reset checkboxes
+    const cb = document.getElementById('excludeDropoutsCheck');
+    if (cb) cb.checked = false;
+    const hpCb = document.getElementById('hidePassedCheck');
+    if (hpCb) hpCb.checked = false;
+
+    document.getElementById('file-info-bar').innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px; flex:1">
+        <i class="ti ti-file-spreadsheet" aria-hidden="true" style="font-size:20px;color:var(--color-text-info)"></i>
+        <span class="file-badge">${file.name}</span>
+        <span style="font-size:14px;color:var(--color-text-primary); font-weight: bold;">تحليل نتائج ${students.length} طالب</span>
+      </div>
+      <div class="no-print" style="display:flex; gap:8px; flex-wrap: wrap;">
+        <button class="btn-action btn-export-excel" onclick="exportExcel()" title="تصدير النتائج الظاهرة إلى إكسل"><i class="ti ti-table-export"></i> تصدير Excel</button>
+        <button class="btn-action btn-export-pdf" onclick="exportPDF()" title="حفظ التقرير بصيغة PDF"><i class="ti ti-file-type-pdf"></i> حفظ PDF</button>
+        <button class="btn-action" onclick="showUpload()"><i class="ti ti-upload"></i> رفع ملف آخر</button>
+      </div>
+    `;
+
+    showResults();
+    renderSpecialtyBar();
+    renderDetectionBar();
+    render();
+  } catch (e) {
+    alert('خطأ في قراءة الملف:\n\n' + e.message);
+    console.error(e);
+  }
+}
+
+// ==========================================
+// EVENT LISTENERS
+// ==========================================
+const fi = document.getElementById('fileInput');
+const dz = document.getElementById('dropZone');
+fi.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+</script>
+</body>
+</html>
